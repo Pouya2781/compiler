@@ -1,0 +1,7 @@
+export enum State {
+  START,
+  SCANNER_PROCESSING,
+  SCAN_DONE,
+  PARSER_PROCESSING,
+  PARSE_DONE
+}
