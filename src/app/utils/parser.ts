@@ -5,6 +5,7 @@ import {SimulationContentType} from "../app.component";
 import {Token} from "../enums/token.enum";
 import {LogService} from "../services/log.service";
 import {Status} from "../enums/status.enum";
+import { saveAs } from 'file-saver';
 
 export const CPP_GRAMMAR: Grammar = {
   S: [["V_Program"]],
@@ -337,7 +338,13 @@ async function predictiveParse(input: TokenData[], transitionTable: TransitionTa
   let isValid = true;
   let top: string;
   let finalInput: string[] = [];
+  const root: Node = {
+    value: "S",
+    children: []
+  };
+  const nodeStack: Node[] = [root];
 
+  let currentNode: Node;
   while (stack.length > 0) {
     const currentTokenData = input[index];
     const currentInput = currentTokenData.token.valueOf();
@@ -368,6 +375,7 @@ async function predictiveParse(input: TokenData[], transitionTable: TransitionTa
     }
 
     top = panicMode ?  top! : stack.pop()!;
+    currentNode = nodeStack.pop()!;
 
     if (terminals.includes(top)) {
       if (top === currentInput) {
@@ -406,6 +414,12 @@ async function predictiveParse(input: TokenData[], transitionTable: TransitionTa
           if (production[0] !== 'ε') {
             for (let i = production.length - 1; i >= 0; i--) {
               stack.push(production[i]);
+              const node = {
+                value: production[i],
+                children: []
+              };
+              nodeStack.push(node);
+              currentNode.children.push(node);
             }
           }
         }
@@ -429,6 +443,11 @@ async function predictiveParse(input: TokenData[], transitionTable: TransitionTa
   } else {
     logService.log.next({value: `Syntax analyse Complete!`, status: Status.FAIL});
   }
+  console.log(root);
+  const jsonString = JSON.stringify(root, null, 2);
+  const blob = new Blob([jsonString], { type: 'text/plain;charset=utf-8' });
+  saveAs(blob, 'tree.json');
+
   return isValid;
 }
 
@@ -498,4 +517,9 @@ const tokenMap: {[key: string]: string} = {
   T_Whitespace: "T_Whitespace",
   ε: "ε",
   $: "$",
+}
+
+export interface Node {
+  value: string;
+  children: Node[];
 }
