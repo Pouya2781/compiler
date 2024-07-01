@@ -339,7 +339,16 @@ async function predictiveParse(input: TokenData[], transitionTable: TransitionTa
   let top: string;
   let finalInput: string[] = [];
   const root: Node = {
-    value: "S",
+    value: "",
+    name: "S",
+    index: -1,
+    line: -1,
+    inlineIndex: -1,
+    type: "",
+    ctype: "",
+    parent: {} as Node,
+    siblings: [],
+    isLeaf: false,
     children: []
   };
   const nodeStack: Node[] = [root];
@@ -380,6 +389,12 @@ async function predictiveParse(input: TokenData[], transitionTable: TransitionTa
     if (terminals.includes(top)) {
       if (top === currentInput) {
         index++;
+        if (top !== "$") {
+          currentNode.value = currentTokenData.value;
+          currentNode.index = currentTokenData.index;
+          currentNode.line = currentTokenData.index;
+          currentNode.inlineIndex = currentTokenData.index;
+        }
         if (stepDelay != 0) {
           parserService.simulationContent.next({
             content: currentTokenData.value,
@@ -415,12 +430,65 @@ async function predictiveParse(input: TokenData[], transitionTable: TransitionTa
             for (let i = production.length - 1; i >= 0; i--) {
               stack.push(production[i]);
               const node = {
-                value: production[i],
+                value: "",
+                name: production[i],
+                index: -1,
+                inlineIndex: -1,
+                line: -1,
+                ctype: "",
+                type: "",
+                parent: {} as Node,
+                siblings: [],
+                isLeaf: false,
                 children: []
               };
+              if (terminals.includes(production[i])) {
+                if (node.name === "T_Decimal") {
+                  node.ctype = "int";
+                }
+                if (node.name === "T_Hexadecimal") {
+                  node.ctype = "int";
+                }
+                if (node.name === "T_String") {
+                  node.ctype = "array";
+                }
+                if (node.name === "T_Character") {
+                  node.ctype = "char";
+                }
+                if (node.name === "T_Int") {
+                  node.ctype = "int";
+                }
+                if (node.name === "T_Bool") {
+                  node.ctype = "bool";
+                }
+                if (node.name === "T_Char") {
+                  node.ctype = "char";
+                }
+                if (node.name === "T_True") {
+                  node.ctype = "bool";
+                }
+                if (node.name === "T_False") {
+                  node.ctype = "bool";
+                }
+              }
               nodeStack.push(node);
-              currentNode.children.push(node);
+              currentNode.children.unshift(node);
             }
+          } else {
+            const node = {
+              value: "",
+              name: production[0],
+              index: -1,
+              inlineIndex: -1,
+              line: -1,
+              ctype: "",
+              type: "",
+              parent: {} as Node,
+              siblings: [],
+              isLeaf: false,
+              children: []
+            };
+            currentNode.children.unshift(node);
           }
         }
       } else {
@@ -521,5 +589,14 @@ const tokenMap: {[key: string]: string} = {
 
 export interface Node {
   value: string;
+  name: string;
+  index: number;
+  line: number;
+  inlineIndex: number;
+  type: string;
+  ctype: string;
+  isLeaf: boolean;
+  parent: Node;
+  siblings: Node[];
   children: Node[];
 }

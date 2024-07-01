@@ -158,8 +158,10 @@ export class AppComponent {
     })
     this._changeDetectorRef.detectChanges();
 
-    const openPre = document.getElementsByClassName("open")[0]!;
-    openPre.scrollIntoView();
+    const openPre = document.getElementsByClassName("open")[0];
+    if (openPre) {
+      openPre.scrollIntoView();
+    }
     outputTextArea.scrollTo({top: outputTextArea.scrollHeight});
   }
 
